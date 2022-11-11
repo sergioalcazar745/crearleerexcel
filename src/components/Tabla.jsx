@@ -37,7 +37,7 @@ export default class Tabla extends Component {
   selectFila = (index) => {
     this.props.filas[0].data.splice(index, 1)
     this.setState({
-      eliminar: true
+      eliminar: !this.state.eliminar
     })
   }
 

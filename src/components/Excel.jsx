@@ -6,14 +6,11 @@ export default class Excel2 extends Component {
 
     state = {
         excel: null,
-        hojas: [],
-        hoja: null,
         nombreHojas: [],
         columnas: [],
         filas: [],
-        columna: 0,
-        actualizar: false,
-        conversion: false
+        conversion: false,
+        spinner: false
     }
 
     selectHoja = React.createRef();
@@ -30,14 +27,14 @@ export default class Excel2 extends Component {
                 columnHeaders.push(worksheet[key].v);
             }
         }
+        columnHeaders.push("Eliminar");
         return columnHeaders;        
     }
 
-    getRows = (numSheet) =>{
-        console.log("Numero: " + numSheet)
+    getRows = (num) =>{
         var rows = [];
-        var dataRows = XLSX.utils.sheet_to_row_object_array(this.state.excel.Sheets[this.state.nombreHojas[numSheet].nombre])
-        console.log(this.state.nombreHojas[numSheet].nombre)
+        var dataRows = XLSX.utils.sheet_to_row_object_array(this.state.excel.Sheets[this.state.nombreHojas[num].nombre])
+        console.log(this.state.nombreHojas[num].nombre)
         rows.push({
             data: dataRows,
         })
@@ -49,23 +46,16 @@ export default class Excel2 extends Component {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         var excel = formData.get("excel");
-        var hojasRead = [];
         var nombreHojasRead = [];
 
         var reader = new FileReader()
         reader.readAsArrayBuffer(excel)
         reader.onloadend = (e) => {
-        var data = new Uint8Array(e.target.result)
-        var excelRead = XLSX.read(data, {type: 'array'})
-        excelRead.SheetNames.forEach(function(sheetName, index) {
-                // var XL_row_object = XLSX.utils.sheet_to_row_object_array(excelRead.Sheets[sheetName])
-                // hojasRead.push({
-                //     data: XL_row_object,
-                //     sheetName
-                // })
-            nombreHojasRead.push({nombre:sheetName, indice: index})
-        })
-
+            var data = new Uint8Array(e.target.result)
+            var excelRead = XLSX.read(data, {type: 'array'})
+            excelRead.SheetNames.forEach(function(sheetName, index) {
+                nombreHojasRead.push({nombre:sheetName, indice: index})
+            })
             this.state.excel = excelRead;
             this.state.nombreHojas = nombreHojasRead
             this.setState({
@@ -78,26 +68,21 @@ export default class Excel2 extends Component {
                 columnas: this.getColumnas(0),
                 filas: this.getRows(0)
             })
-            
-            // for (var hoja of this.sheets[0].data) {
-            //     console.log(hoja)
-            // }
-            // for (var nombre of this.sheetNames) {
-            //     console.log(nombre)
-            // }
         }
     }
 
     cambiarHoja = () => {
         this.setState({
-            conversion:false
+            conversion:false,
+            spinner: true
         })
         this.state.columnas = this.getColumnas(this.selectHoja.current.value)
         this.state.filas = this.getRows(this.selectHoja.current.value)
         this.setState({
             columnas: this.state.columnas,
             filas: this.state.filas,
-            conversion: true
+            conversion: true,
+            spinner: false
         });            
     }
 
@@ -111,11 +96,14 @@ export default class Excel2 extends Component {
                     <button className="btn btn-primary mt-3">Convertir</button>
                 </form>
                 <hr/>
-                {/* <div class="d-flex justify-content-center">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                {
+                    this.state.spinner &&
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
                     </div>
-                </div> */}
+                }
                 {
                     this.state.conversion &&
                     (
@@ -130,7 +118,7 @@ export default class Excel2 extends Component {
                             }
                             </select>
                         </form>
-                        <Tabla actualizar={this.state.actualizar} columnas={this.state.columnas} filas={this.state.filas}/>
+                        <Tabla columnas={this.state.columnas} filas={this.state.filas}/>
                     </>                    
                     )
                 }                

@@ -30,12 +30,16 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 export default class Tabla extends Component {
 
-  // setData = () => {
-  //   // console.log(this.props.filas[0].data)
-  //   // for (const iterator of this.props.filas.data) {
-  //   //   console.log(iterator)
-  //   // }
-  // }
+  state =  {
+    eliminar: false
+  }
+
+  selectFila = (index) => {
+    this.props.filas[0].data.splice(index, 1)
+    this.setState({
+      eliminar: true
+    })
+  }
 
   componentDidMount = () => {
     console.log(this.props.filas)
@@ -86,9 +90,13 @@ export default class Tabla extends Component {
                   return (
                     <StyledTableRow key={fila.Nombre}>
                       {
-                        this.props.columnas.map((nombre, index2) => {                          
-                          return <StyledTableCell align="right">{fila[nombre]}</StyledTableCell>
+                        this.props.columnas.map((nombre, index2) => {    
+                          return index2 < this.props.columnas.length - 1 ?                      
+                          <StyledTableCell align="right">{fila[nombre]}</StyledTableCell>
+                          :
+                          <StyledTableCell align="right"><a className='btn btn-danger' onClick={() => this.selectFila(index1)}>Eliminar</a></StyledTableCell>
                         })
+                        
                       }
                     </StyledTableRow>
                   )

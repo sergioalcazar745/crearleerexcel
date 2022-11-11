@@ -1,5 +1,5 @@
-import TablaMaterial from './components/TablaMaterial';
-import Excel from './components/Excel';
+import TablaMaterial from './components/TablaFunction';
+import Excel2 from './components/Excel';
 import 'bootstrap/dist/css/bootstrap.min.css'
 // import Popper from 'popper.js';
 import 'bootstrap/dist/js/bootstrap.bundle';
@@ -7,7 +7,7 @@ import 'bootstrap/dist/js/bootstrap.bundle';
 function App() {
   return (
     <div>
-      <Excel/>
+      <Excel2/>
     </div>
   );
 }

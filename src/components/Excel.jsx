@@ -1,42 +1,140 @@
-import React from "react";
+import React, { Component } from 'react';
 import * as XLSX from 'xlsx'
+import Tabla from "./Tabla";
 
-export default function Excel(){
-    
-    function enviarExcel(e){
+export default class Excel2 extends Component {
+
+    state = {
+        excel: null,
+        hojas: [],
+        hoja: null,
+        nombreHojas: [],
+        columnas: [],
+        filas: [],
+        columna: 0,
+        actualizar: false,
+        conversion: false
+    }
+
+    selectHoja = React.createRef();
+
+    getColumnas = (num) => {
+        var sheet_name_list = this.state.excel.SheetNames;
+        let columnHeaders = [];
+        let index = parseInt(num);
+        
+        var worksheet = this.state.excel.Sheets[sheet_name_list[index]];
+        for (let key in worksheet) {
+            let regEx = new RegExp("^\(\\w\)\(1\){1}$");
+            if (regEx.test(key) == true) {                    
+                columnHeaders.push(worksheet[key].v);
+            }
+        }
+        return columnHeaders;        
+    }
+
+    getRows = (numSheet) =>{
+        console.log("Numero: " + numSheet)
+        var rows = [];
+        var dataRows = XLSX.utils.sheet_to_row_object_array(this.state.excel.Sheets[this.state.nombreHojas[numSheet].nombre])
+        console.log(this.state.nombreHojas[numSheet].nombre)
+        rows.push({
+            data: dataRows,
+        })
+        return rows;
+    }
+
+    // eslint-disable-next-line no-unreachable
+    convertirExcel = (e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         var excel = formData.get("excel");
+        var hojasRead = [];
+        var nombreHojasRead = [];
 
-        var hojas = [];
         var reader = new FileReader()
         reader.readAsArrayBuffer(excel)
         reader.onloadend = (e) => {
-            var data = new Uint8Array(e.target.result)
-            var workbook = XLSX.read(data, {type: 'array'})
-            workbook.SheetNames.forEach(function(sheetName) {
-                var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName])
-                hojas.push({
-                    data: XL_row_object,
-                    sheetName
-                })
+        var data = new Uint8Array(e.target.result)
+        var excelRead = XLSX.read(data, {type: 'array'})
+        excelRead.SheetNames.forEach(function(sheetName, index) {
+                // var XL_row_object = XLSX.utils.sheet_to_row_object_array(excelRead.Sheets[sheetName])
+                // hojasRead.push({
+                //     data: XL_row_object,
+                //     sheetName
+                // })
+            nombreHojasRead.push({nombre:sheetName, indice: index})
+        })
+
+            this.state.excel = excelRead;
+            this.state.nombreHojas = nombreHojasRead
+            this.setState({
+                excel: this.state.excel,
+                nombreHojas: this.state.nombreHojas,
+                conversion: true,               
             })
-            // console.log(hojas[0].data)
-            for (var hoja of hojas[0].data) {
-                console.log(hoja)
-            }
+
+            this.setState({
+                columnas: this.getColumnas(0),
+                filas: this.getRows(0)
+            })
+            
+            // for (var hoja of this.sheets[0].data) {
+            //     console.log(hoja)
+            // }
+            // for (var nombre of this.sheetNames) {
+            //     console.log(nombre)
+            // }
         }
     }
 
-    return (
-        <div className="container">
-            <h1 className="my-5">Excel</h1>
-            <form onSubmit={enviarExcel}>
-                <label className="form-label">Seleccion un archivo excel: </label>
-                <input type={"file"} className="form-control" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" name="excel"/>
-                <button className="btn btn-primary mt-3">Convertir</button>
-            </form>
-            <hr/>
-        </div>
-    )
+    cambiarHoja = () => {
+        this.setState({
+            conversion:false
+        })
+        this.state.columnas = this.getColumnas(this.selectHoja.current.value)
+        this.state.filas = this.getRows(this.selectHoja.current.value)
+        this.setState({
+            columnas: this.state.columnas,
+            filas: this.state.filas,
+            conversion: true
+        });            
+    }
+
+    render() {
+        return (
+            <div className="container">
+                <h1 className="my-5">Excel</h1>
+                <form onSubmit={this.convertirExcel}>
+                    <label className="form-label">Seleccion un archivo excel: </label>
+                    <input type={"file"} className="form-control" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" name="excel"/>
+                    <button className="btn btn-primary mt-3">Convertir</button>
+                </form>
+                <hr/>
+                {/* <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div> */}
+                {
+                    this.state.conversion &&
+                    (
+                    <>
+                        <form>
+                            <label className="form-label">Hojas </label>
+                            <select className='form-select' ref={this.selectHoja} onChange={this.cambiarHoja}>
+                            {
+                                this.state.nombreHojas.map((hoja, index) => {
+                                    return (<option key={index} value={hoja.indice}>{hoja.nombre}</option>)
+                                })
+                            }
+                            </select>
+                        </form>
+                        <Tabla actualizar={this.state.actualizar} columnas={this.state.columnas} filas={this.state.filas}/>
+                    </>                    
+                    )
+                }                
+            </div>
+        )
+    }
 }

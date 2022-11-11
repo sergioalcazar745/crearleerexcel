@@ -40,8 +40,22 @@ const rows = [
   createData('Gingerbread', 356, 16.0, 49, 3.9),
 ];
 
-export default function TablaMaterial() {
+/* --------------------------------------------------------- */
+
+function createData2(columnas){
+  console.log(columnas)
+}
+
+var rows2 = []
+
+
+
+export default function TablaMaterial(props) {
     
+  createData2(props.columnas)
+
+  
+
   return (
     <div className='container'>
         <h1 className='my-5'>Prueba de tabla</h1>

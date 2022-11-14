@@ -42,15 +42,15 @@ export default class Tabla extends Component {
   state = {
     columnas: [],
     filas: [],
+    fila: null,
     status: false,
     open: false,
-    guardar: false,
-    openSave: false,
+    openModify: false
   }
 
   setData = () => {
-    this.state.columnas = this.getColumnas(this.props.hoja.index)
-    this.state.filas = this.getRows(this.props.hoja.index)
+    this.state.columnas = this.getColumnas()
+    this.state.filas = this.getRows()
     this.setState({
       columnas: this.state.columnas,
       filas: this.state.filas,
@@ -58,10 +58,10 @@ export default class Tabla extends Component {
     })
   }
 
-  getColumnas = (num) => {
+  getColumnas = () => {
     var sheet_name_list = this.props.fichero.SheetNames;
     let columnHeaders = [];
-    let index = parseInt(num);
+    let index = parseInt(this.props.hoja.index);
 
     var worksheet = this.props.fichero.Sheets[sheet_name_list[index]];
     for (let key in worksheet) {
@@ -75,7 +75,7 @@ export default class Tabla extends Component {
     return columnHeaders;
   }
 
-  getRows = (num) => {
+  getRows = () => {
     var rows = [];
     for (var fila of this.props.hoja.data) {
       rows.push(fila)
@@ -83,21 +83,71 @@ export default class Tabla extends Component {
     return rows;
   }
 
-  selectFila = (index) => {
-    console.log(index)
+  añadirFila = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    var fila = {}
+    for (var valor of this.state.columnas) {
+      if(valor != "Eliminar" && valor != "Modificar"){
+        fila[valor] = formData.get(valor);
+      }
+    }
+    this.props.hoja.data.push(fila);
+    this.state.filas =this.getRows()
+    this.props.guardarHoja(this.props.hoja);
+    this.setState({
+      filas: this.state.filas,
+      open: false,
+    })
+  }
+  
+  eliminarFila = (index) => {
     for (let i = 0; i < this.props.hoja.data.length; i++) {
       console.log(this.props.hoja.data[i].__rowNum__)
       if(this.props.hoja.data[i].__rowNum__ == index){
-        console.log("Joer")
-        this.state.filas.splice(index, 1)
+        this.state.filas.splice(i, 1)
       } 
     }
     this.props.hoja.data = this.state.filas;
     this.props.guardarHoja(this.props.hoja);
-    console.log(this.state.filas)
     this.setState({
       filas: this.state.filas
     })
+  }
+
+  modificarFila = (e) => {
+    e.preventDefault();
+    console.log(this.props.hoja.data)
+    const formData = new FormData(e.currentTarget);
+    var fila = {}
+    for (var valor of this.state.columnas) {
+      if(valor != "Eliminar" && valor != "Modificar"){
+        fila[valor] = formData.get(valor);
+      }
+    }
+    fila['__rowNum__'] = formData.get('__rowNum__');
+    for (let i = 0; i < this.props.hoja.data.length; i++) {
+      if(this.props.hoja.data[i].__rowNum__ == fila['__rowNum__']){
+        this.props.hoja.data[i] = fila;
+      } 
+    }
+    console.log(this.props.hoja.data)
+    this.state.filas = this.getRows()
+    this.props.guardarHoja(this.props.hoja);
+    this.setState({
+      filas: this.state.filas,
+      openModify: false,
+    })
+  }
+
+  getFila = (index) => {
+    var fila = ""
+    for (let i = 0; i < this.props.hoja.data.length; i++) {
+      if(this.props.hoja.data[i].__rowNum__ == index){
+        var fila = this.props.hoja.data[i];
+      } 
+    }
+    return fila
   }
 
   cerrarDialog = () => {
@@ -112,41 +162,18 @@ export default class Tabla extends Component {
     })
   }
 
-  cerrarDialogSave = () => {
+  cerrarDialogModify = () => {
     this.setState({
-      openSave: false
+      openModify: false
     })
   }
 
-  abrirDialogSave = () => {
+  abrirDialogModify = (index) => {
+    var fila = this.getFila(index)
+    this.state.fila = fila
     this.setState({
-      guardar:false,
-      openSave: true
-    })
-  }
-
-  guardarCambios = () => {
-    this.props.guardarHoja(this.props.hoja);
-    this.setState({
-      openSave: false
-    })
-  }
-
-  añadirFila = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    var fila = {}
-    for (var valor of this.state.columnas) {
-      if(valor != "Eliminar" && valor != "Modificar"){
-        fila[valor] = formData.get(valor);
-      }
-    }
-    this.props.hoja.data.push(fila);
-    this.state.filas.push(fila);
-    this.setState({
-      filas: this.state.filas,
-      open: false,
-      guardar: true
+      openModify: true,
+      fila: fila,
     })
   }
 
@@ -156,9 +183,6 @@ export default class Tabla extends Component {
 
   componentDidUpdate = (newVal) => {
     if(newVal.actualizar != this.props.actualizar){
-      for (const iterator of this.props.hoja.data) {
-        console.log(iterator.__rowNum__)
-      }
       this.setData();
     }
   }
@@ -192,9 +216,9 @@ export default class Tabla extends Component {
                           return index2 < this.state.columnas.length - 2 ? 
                           <StyledTableCell align="right">{fila[nombre]}</StyledTableCell> 
                           : index2 < this.state.columnas.length -1 ? 
-                          <StyledTableCell align="right"><a className='btn btn-danger' onClick={() => this.selectFila(fila['__rowNum__'])}>Eliminar</a></StyledTableCell>
+                          <StyledTableCell align="right"><a className='btn btn-danger' onClick={() => this.eliminarFila(fila['__rowNum__'])}>Eliminar</a></StyledTableCell>
                           :
-                          <StyledTableCell align="right"><a className='btn btn-primary'>Modificar</a></StyledTableCell>
+                          <StyledTableCell align="right"><Button variant="contained" color="primary" onClick={() => this.abrirDialogModify(fila['__rowNum__'])}>Modificar fila</Button></StyledTableCell>
                         })
                       }
                     </StyledTableRow>
@@ -232,38 +256,34 @@ export default class Tabla extends Component {
               <button className='btn btn-danger mt-3' type='button' onClick={() => this.cerrarDialog()}>Atrás</button>        
             </form>
           </DialogContent>
-        </Dialog><br/>
-        {
-          this.state.guardar &&
-          <Button variant="outlined" onClick={this.abrirDialogSave} color="primary">
-          Guardar
-          </Button>          
-        }
+        </Dialog>
 
-        {/* Dialog guardar */}
+        {/* Dialog modificar fila */}
 
-        <Dialog
-            open={this.state.openSave}
-            onClose={this.cerrarDialog}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
-          >
-            <DialogTitle id="alert-dialog-title">
-              {"Use Google's location service?"}
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText id="alert-dialog-description">
-                Let Google help apps determine location. This means sending anonymous
-                location data to Google, even when no apps are running.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={this.cerrarDialogSave}>Cancelar</Button>
-              <Button onClick={this.guardarCambios} autoFocus>
-                Aceptar
-              </Button>
-            </DialogActions>
-          </Dialog>        
+        <Dialog open={this.state.openModify} onClose={this.cerrarDialogModify} className='w-100'>
+          <DialogTitle>Modificar fila</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+            </DialogContentText>
+            <form method='post' onSubmit={this.modificarFila}>
+              {
+                this.state.fila != null &&
+                this.state.columnas.map((nombre, index) => {
+                  
+                  return (nombre != "Eliminar" && nombre != "Modificar")? (
+                    <div className='mt-3'>
+                      <label className='form-label'>{nombre}</label>
+                      <input type={"text"} name={nombre} className='form-control' defaultValue={this.state.fila[nombre]}/>
+                    </div>
+                  ):<input type={"hidden"} defaultValue={this.state.fila['__rowNum__']} name='__rowNum__'/>
+                })
+              }     
+              <button className='btn btn-primary mt-3 me-3'>Añadir</button>   
+              <button className='btn btn-danger mt-3' type='button' onClick={() => this.cerrarDialogModify()}>Atrás</button>        
+            </form>
+          </DialogContent>
+        </Dialog>
+
       </div>
     )
   }

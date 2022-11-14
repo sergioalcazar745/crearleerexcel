@@ -131,7 +131,6 @@ export default class Tabla extends Component {
         this.props.hoja.data[i] = fila;
       } 
     }
-    console.log(this.props.hoja.data)
     this.state.filas = this.getRows()
     this.props.guardarHoja(this.props.hoja);
     this.setState({

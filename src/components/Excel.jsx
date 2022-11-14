@@ -68,7 +68,8 @@ export default class Excel2 extends Component {
         for (var sheet of this.state.hojas) {
             var workSheet = XLSX.utils.json_to_sheet(sheet.data);
             XLSX.utils.book_append_sheet(workBook, workSheet, sheet.name);
-        }       
+        }      
+        console.log(workBook) 
         XLSX.writeFile(workBook, this.state.nombre);
     }
 

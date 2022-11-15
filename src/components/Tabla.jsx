@@ -197,7 +197,7 @@ export default class Tabla extends Component {
                   this.state.status > 0 &&
                   this.state.columnas.map((nombre, index) => {
                     return index == 0 ?
-                      <StyledTableCell key={index}>{nombre}</StyledTableCell>
+                      <StyledTableCell key={index+'columna'}>{nombre}</StyledTableCell>
                       :
                       <StyledTableCell key={index} align='right'>{nombre}</StyledTableCell>
                   })
@@ -244,7 +244,7 @@ export default class Tabla extends Component {
                 this.state.columnas.map((nombre, index) => {
                   
                   return (nombre != "Eliminar" && nombre != "Modificar")? (
-                    <div className='mt-3'>
+                    <div className='mt-3' key={index+'dialogocrear'}>
                       <label className='form-label'>{nombre}</label>
                       <input type={"text"} name={nombre} className='form-control'/>
                     </div>
@@ -270,7 +270,7 @@ export default class Tabla extends Component {
                 this.state.columnas.map((nombre, index) => {
                   
                   return (nombre != "Eliminar" && nombre != "Modificar")? (
-                    <div className='mt-3'>
+                    <div className='mt-3' key={index+'dialogomodificar'}>
                       <label className='form-label'>{nombre}</label>
                       <input type={"text"} name={nombre} className='form-control' defaultValue={this.state.fila[nombre]}/>
                     </div>
